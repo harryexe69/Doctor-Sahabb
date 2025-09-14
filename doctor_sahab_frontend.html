@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Sahab - AI Health Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            color: #1e40af;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #3b82f6;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .option-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            border-color: #3b82f6;
+        }
+
+        .option-card h3 {
+            font-size: 1.5rem;
+            color: #1e40af;
+            margin-bottom: 15px;
+        }
+
+        .option-card p {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .chat-container {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: #1e40af;
+            color: white;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .message.user .message-bubble {
+            background: #3b82f6;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.bot .message-bubble {
+            background: white;
+            color: #333;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-text {
+            margin-bottom: 10px;
+        }
+
+        .suggested-tests {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .test-tag {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+
+        .chat-input {
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .chat-input input:focus {
+            border-color: #3b82f6;
+        }
+
+        .chat-input button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+
+        .chat-input button:hover {
+            background: #2563eb;
+        }
+
+        .chat-input button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .back-button {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background: #4b5563;
+        }
+
+        .map-container {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .map-placeholder {
+            background: #f3f4f6;
+            border: 2px dashed #d1d5db;
+            border-radius: 15px;
+            padding: 60px;
+            margin: 20px 0;
+        }
+
+        .emergency-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .emergency-button:hover {
+            background: #dc2626;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border: 1px solid #fecaca;
+        }
+
+        .success {
+            background: #f0fdf4;
+            color: #16a34a;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border: 1px solid #bbf7d0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .message-bubble {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Doctor Sahab</h1>
+            <p>Your AI Health Assistant</p>
+        </div>
+
+        <!-- Main Options -->
+        <div id="main-options" class="options-grid">
+            <div class="option-card" onclick="startChat()">
+                <h3>💬 Consult Doctor Sahab Now</h3>
+                <p>Chat with our AI health assistant for immediate guidance and symptom analysis</p>
+            </div>
+            
+            <div class="option-card" onclick="showMap()">
+                <h3>🏥 Find Nearest Health Facilities</h3>
+                <p>Locate nearby hospitals and healthcare centers based on your location</p>
+            </div>
+            
+            <div class="option-card" onclick="showEmergency()">
+                <h3>🚨 Emergency Services</h3>
+                <p>Quick access to emergency contact information</p>
+            </div>
+        </div>
+
+        <!-- Chat Interface -->
+        <div id="chat-container" class="chat-container" style="display: none;">
+            <div class="chat-header">
+                <button class="back-button" onclick="showMain()">← Back</button>
+                <h3>Doctor Sahab Chat</h3>
+                <div></div>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="message bot">
+                    <div class="message-bubble">
+                        <div class="message-text">Hello! I'm Doctor Sahab, your AI health assistant. How can I help you today?</div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="message-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" id="send-button">Send</button>
+            </div>
+        </div>
+
+        <!-- Map Interface -->
+        <div id="map-container" class="map-container" style="display: none;">
+            <div class="chat-header">
+                <button class="back-button" onclick="showMain()">← Back</button>
+                <h3>Find Health Facilities</h3>
+                <div></div>
+            </div>
+            <div class="map-placeholder">
+                <h3>📍 Location Services</h3>
+                <p>Click the button below to find nearby hospitals</p>
+                <button onclick="findNearbyHospitals()" style="background: #3b82f6; color: white; border: none; padding: 15px 30px; border-radius: 25px; cursor: pointer; margin-top: 20px;">
+                    Find Nearby Hospitals
+                </button>
+            </div>
+            <div id="hospital-results"></div>
+        </div>
+    </div>
+
+    <!-- Emergency Button -->
+    <button class="emergency-button" onclick="callEmergency()" title="Emergency Contact">
+        🚑
+    </button>
+
+    <script>
+        let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        let isLoading = false;
+
+        function showMain() {
+            document.getElementById('main-options').style.display = 'grid';
+            document.getElementById('chat-container').style.display = 'none';
+            document.getElementById('map-container').style.display = 'none';
+        }
+
+        function startChat() {
+            document.getElementById('main-options').style.display = 'none';
+            document.getElementById('chat-container').style.display = 'flex';
+            document.getElementById('map-container').style.display = 'none';
+            document.getElementById('message-input').focus();
+        }
+
+        function showMap() {
+            document.getElementById('main-options').style.display = 'none';
+            document.getElementById('chat-container').style.display = 'none';
+            document.getElementById('map-container').style.display = 'block';
+        }
+
+        function showEmergency() {
+            alert('🚨 Emergency Contact: 911\n\nFor immediate medical emergencies, call 911 or go to your nearest emergency room.');
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || isLoading) return;
+
+            // Add user message to chat
+            addMessage('user', message);
+            input.value = '';
+            
+            // Show loading
+            setLoading(true);
+
+            try {
+                const response = await fetch('http://localhost:8000/api/chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        message: message
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                
+                // Add bot response
+                addMessage('bot', data.reply, data.suggested_tests);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('bot', 'Sorry, I encountered an error. Please make sure the backend server is running on http://localhost:8000');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function addMessage(sender, text, suggestedTests = null) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            let testsHtml = '';
+            if (suggestedTests && suggestedTests.length > 0) {
+                testsHtml = '<div class="suggested-tests"><strong>Suggested Tests:</strong><br>';
+                suggestedTests.forEach(test => {
+                    testsHtml += `<span class="test-tag">${test}</span>`;
+                });
+                testsHtml += '</div>';
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-bubble">
+                    <div class="message-text">${text}</div>
+                    ${testsHtml}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function setLoading(loading) {
+            isLoading = loading;
+            const sendButton = document.getElementById('send-button');
+            const input = document.getElementById('message-input');
+            
+            if (loading) {
+                sendButton.textContent = 'Sending...';
+                sendButton.disabled = true;
+                input.disabled = true;
+            } else {
+                sendButton.textContent = 'Send';
+                sendButton.disabled = false;
+                input.disabled = false;
+            }
+        }
+
+        async function findNearbyHospitals() {
+            const resultsDiv = document.getElementById('hospital-results');
+            resultsDiv.innerHTML = '<div class="loading">Finding nearby hospitals...</div>';
+
+            try {
+                // Get user's location
+                if (!navigator.geolocation) {
+                    throw new Error('Geolocation is not supported by this browser');
+                }
+
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    try {
+                        const response = await fetch(`http://localhost:8000/api/places/nearby?lat=${lat}&lng=${lng}`);
+                        
+                        if (!response.ok) {
+                            throw new Error('Failed to find nearby hospitals');
+                        }
+
+                        const hospital = await response.json();
+                        
+                        resultsDiv.innerHTML = `
+                            <div class="success">
+                                <h3>🏥 ${hospital.name}</h3>
+                                <p><strong>Address:</strong> ${hospital.address}</p>
+                                <p><strong>Distance:</strong> ${Math.round(hospital.distance_meters)}m away</p>
+                                <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${hospital.lat},${hospital.lng}', '_blank')" 
+                                        style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; margin-top: 10px;">
+                                    Get Directions
+                                </button>
+                            </div>
+                        `;
+                    } catch (error) {
+                        resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                    }
+                }, (error) => {
+                    resultsDiv.innerHTML = `<div class="error">Location access denied or unavailable. Please enable location services.</div>`;
+                });
+
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function callEmergency() {
+            if (navigator.userAgent.match(/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i)) {
+                // Mobile device - make phone call
+                window.open('tel:911');
+            } else {
+                // Desktop - show modal
+                alert('🚨 Emergency Contact: 911\n\nUse a smartphone for Emergency Contact Services\n\nNumber: 911');
+            }
+        }
+
+        // Test backend connection on page load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                if (response.ok) {
+                    console.log('✅ Backend connected successfully');
+                } else {
+                    console.warn('⚠️ Backend responded with error');
+                }
+            } catch (error) {
+                console.error('❌ Backend not available:', error);
+                alert('⚠️ Backend server not available!\n\nPlease make sure to run:\npython doctor_sahab_standalone.py\n\nThen refresh this page.');
+            }
+        });
+    </script>
+</body>
+</html>
+
+
